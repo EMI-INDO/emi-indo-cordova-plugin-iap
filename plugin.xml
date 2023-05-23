@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<plugin id="emi-indo-cordova-plugin-iap" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+	<name>emiBillingPlugin</name>
+	<js-module name="emiBillingPlugin" src="www/emiBillingPlugin.js">
+		<clobbers target="cordova.plugins.emiBillingPlugin"/>
+	</js-module>
+	<platform name="android">
+	
+	 <preference name="BILLING_VERSION" default="6.0.0" />
+	
+		<config-file parent="/*" target="res/xml/config.xml">
+			<feature name="emiBillingPlugin">
+				<param name="android-package" value="emi.indo.cordova.plugin.iap.emiBillingPlugin"/>
+			</feature>
+		</config-file>
+		
+		<config-file target="AndroidManifest.xml" parent="/manifest">
+      <uses-permission android:name="com.android.vending.BILLING" />
+    </config-file>
+		
+		
+		<config-file parent="/*" target="AndroidManifest.xml"/>
+		<source-file src="src/android/emiBillingPlugin.java" target-dir="src/emi/indo/cordova/plugin/iap"/>
+		
+		<framework src="com.android.billingclient:billing:$BILLING_VERSION" />
+		
+	</platform>
+</plugin>
