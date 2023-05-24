@@ -1,6 +1,6 @@
 {
   "name": "emi-indo-cordova-plugin-iap",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Cordova Plugin in app purchase android",
   "cordova": {
     "id": "emi-indo-cordova-plugin-iap",

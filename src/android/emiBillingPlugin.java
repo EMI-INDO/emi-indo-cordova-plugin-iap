@@ -38,8 +38,6 @@ public class emiBillingPlugin extends CordovaPlugin {
    String ProductId = null;
    String Type = null;
 
-
-
    String Position = null;
 
     BillingClient billingClient;
@@ -78,7 +76,24 @@ public class emiBillingPlugin extends CordovaPlugin {
             return true;
         }
 
-        if (action.equals("Purchase")) {
+        if (action.equals("registerProductId")) {
+            final String productId = args.getString(0);
+            final String type = args.getString(1);
+
+            try {
+                ProductId = productId;
+                Type = type;
+            } catch ( Exception e) {
+
+                callbackContext.error(e.toString());
+            }
+
+            _registerProductId(callbackContext);
+
+            return true;
+        }
+
+        if (action.equals("purchaseItem")) {
            final String productId = args.getString(0);
            final String type = args.getString(1);
 
@@ -90,7 +105,7 @@ public class emiBillingPlugin extends CordovaPlugin {
                 callbackContext.error(e.toString());
             }
 
-            _Purchase();
+            _purchaseItem();
 
             return true;
         }
@@ -153,6 +168,99 @@ public class emiBillingPlugin extends CordovaPlugin {
 
 
         return false;
+    }
+
+    private void _registerProductId(CallbackContext callbackContext) {
+
+        ArrayList<QueryProductDetailsParams.Product> productList = new ArrayList<>();
+
+        final ArrayList<String> purchaseItemIDs = new ArrayList<String>() {{
+            add(ProductId);
+            add(Type);
+
+        }};
+
+        for (String ids : purchaseItemIDs) {
+            productList.add(
+                    QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId(ids)
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build());
+        }
+
+        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+                .setProductList(productList)
+                .build();
+
+        billingClient.queryProductDetailsAsync(params, (billingResult, list) -> {
+
+            for (ProductDetails li : list) {
+                if (li != null){
+
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, "onRegisterProductIdSuccess");
+                    result.setKeepCallback(true);
+                    callbackContext.sendPluginResult(result);
+                    callbackContext.success(li.getProductId());
+
+                } else {
+
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, "onRegisterProductIdError");
+                    result.setKeepCallback(true);
+                    callbackContext.sendPluginResult(result);
+
+                }
+            }
+
+
+        });
+
+    }
+
+
+    void _purchaseItem() {
+
+
+        ArrayList<QueryProductDetailsParams.Product> productList = new ArrayList<>();
+
+        final ArrayList<String> purchaseItemIDs = new ArrayList<String>() {{
+            add(ProductId);
+            add(Type);
+
+        }};
+
+        //Set your In App Product ID in setProductId()
+        for (String ids : purchaseItemIDs) {
+            productList.add(
+                    QueryProductDetailsParams.Product.newBuilder()
+                            .setProductId(ids)
+                            .setProductType(BillingClient.ProductType.INAPP)
+                            .build());
+        }
+
+        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
+                .setProductList(productList)
+                .build();
+
+        billingClient.queryProductDetailsAsync(params, (billingResult, list) -> {
+
+                LaunchPurchaseFlow(list.get(0));
+
+        });
+    }
+
+    void LaunchPurchaseFlow(ProductDetails productDetails) {
+        ArrayList<BillingFlowParams.ProductDetailsParams> productList = new ArrayList<>();
+
+        productList.add(
+                BillingFlowParams.ProductDetailsParams.newBuilder()
+                        .setProductDetails(productDetails)
+                        .build());
+
+        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
+                .setProductDetailsParamsList(productList)
+                .build();
+
+        billingClient.launchBillingFlow(cordova.getActivity(), billingFlowParams);
     }
 
     private void getOrderProductDetail(CallbackContext callbackContext) {
@@ -335,39 +443,7 @@ public class emiBillingPlugin extends CordovaPlugin {
     }
 
 
-    void _Purchase() {
-        ArrayList<QueryProductDetailsParams.Product> productList = new ArrayList<>();
 
-        final ArrayList<String> purchaseItemIDs = new ArrayList<String>() {{
-            add(ProductId);
-            add(Type);
-
-        }};
-
-        //Set your In App Product ID in setProductId()
-        for (String ids : purchaseItemIDs) {
-            productList.add(
-                    QueryProductDetailsParams.Product.newBuilder()
-                            .setProductId(ids)
-                            .setProductType(BillingClient.ProductType.INAPP)
-                            .build());
-        }
-
-        QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
-                .setProductList(productList)
-                .build();
-
-        billingClient.queryProductDetailsAsync(params, (billingResult, list) -> {
-
-
-            for (ProductDetails li : list) {
-
-                LaunchPurchaseFlow(list.get(0));
-
-            }
-
-        });
-    }
 
 
 
@@ -411,20 +487,7 @@ public class emiBillingPlugin extends CordovaPlugin {
 
 
 
-    void LaunchPurchaseFlow(ProductDetails productDetails) {
-        ArrayList<BillingFlowParams.ProductDetailsParams> productList = new ArrayList<>();
 
-        productList.add(
-                BillingFlowParams.ProductDetailsParams.newBuilder()
-                        .setProductDetails(productDetails)
-                        .build());
-
-        BillingFlowParams billingFlowParams = BillingFlowParams.newBuilder()
-                .setProductDetailsParamsList(productList)
-                .build();
-
-        billingClient.launchBillingFlow(cordova.getActivity(), billingFlowParams);
-    }
 
 
 
