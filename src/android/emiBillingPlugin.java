@@ -217,6 +217,35 @@ public class emiBillingPlugin extends CordovaPlugin {
     }
 
 
+    void establishConnection(CallbackContext callbackContext) {
+        billingClient.startConnection(new BillingClientStateListener() {
+            @Override
+            public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+
+
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, "onStartConnectionFinished");
+                    result.setKeepCallback(true);
+                    callbackContext.sendPluginResult(result);
+
+                }
+            }
+
+            @Override
+            public void onBillingServiceDisconnected() {
+
+
+                establishConnection(callbackContext);
+
+                PluginResult result = new PluginResult(PluginResult.Status.OK, "onStartDisconnected");
+                result.setKeepCallback(true);
+                callbackContext.sendPluginResult(result);
+
+            }
+        });
+    }
+
+
     void _purchaseItem() {
 
 
@@ -322,7 +351,7 @@ public class emiBillingPlugin extends CordovaPlugin {
 
                                                     }
 
-                                                    _getOrderProductDetail(callbackContext);
+                                                  //  _getOrderProductDetail(callbackContext);
 
                                                 }
 
@@ -380,7 +409,7 @@ public class emiBillingPlugin extends CordovaPlugin {
 
                                             if (list.get(i).getProducts().contains(ProductId)) {
 
-                                                PluginResult result = new PluginResult(PluginResult.Status.OK, "on.Restored.Success");   //Facebook Banner AdDistroyed
+                                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onRestoredSuccess");   //Facebook Banner AdDistroyed
                                                 result.setKeepCallback(true);
                                                 callbackContext.sendPluginResult(result);
 
@@ -414,33 +443,7 @@ public class emiBillingPlugin extends CordovaPlugin {
 
 
 
-    void establishConnection(CallbackContext callbackContext) {
-        billingClient.startConnection(new BillingClientStateListener() {
-            @Override
-            public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
-                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
 
-
-                    PluginResult result = new PluginResult(PluginResult.Status.OK, "on.Billing.Setup.Finished");
-                    result.setKeepCallback(true);
-                    callbackContext.sendPluginResult(result);
-
-                }
-            }
-
-            @Override
-            public void onBillingServiceDisconnected() {
-
-
-                establishConnection(callbackContext);
-
-                PluginResult result = new PluginResult(PluginResult.Status.OK, "on.Billing.Service.Disconnected");
-                result.setKeepCallback(true);
-                callbackContext.sendPluginResult(result);
-
-            }
-        });
-    }
 
 
 
@@ -474,11 +477,12 @@ public class emiBillingPlugin extends CordovaPlugin {
 
             for (ProductDetails li : list) {
 
-                callbackContext.success(li.toString());
 
-                PluginResult result = new PluginResult(PluginResult.Status.OK,  "on.GetProductDetail.Success");
+
+                PluginResult result = new PluginResult(PluginResult.Status.OK,  "onGetProductDetailSuccess");
                 result.setKeepCallback(true);
                 callbackContext.sendPluginResult(result);
+                callbackContext.success(li.toString());
 
             }
             //Do Anything that you want with requested product details
@@ -521,7 +525,7 @@ public class emiBillingPlugin extends CordovaPlugin {
                         for (String pur : purchases.getProducts()) {
                             if (pur.equalsIgnoreCase(ProductId)) {
 
-                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onNon-Consumable.PurchaseSuccessful");
+                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onNonConsumablePurchaseSuccessful");
                                 result.setKeepCallback(true);
                                 callbackContext.sendPluginResult(result);
                             } else {
@@ -549,7 +553,7 @@ public class emiBillingPlugin extends CordovaPlugin {
         billingClient.consumeAsync(params, (billingResult, s) -> {
 
             Log.d("TAG", "Consuming Successful: "+s);
-            PluginResult result = new PluginResult(PluginResult.Status.OK, "onConsumable.PurchaseSuccessful");
+            PluginResult result = new PluginResult(PluginResult.Status.OK, "onConsumablePurchaseSuccessful");
             result.setKeepCallback(true);
             callbackContext.sendPluginResult(result);
 
