@@ -1,7 +1,7 @@
 {
   "name": "emi-indo-cordova-plugin-iap",
   "version": "0.0.1",
-  "description": "",
+  "description": "Cordova Plugin in app purchase android",
   "cordova": {
     "id": "emi-indo-cordova-plugin-iap",
     "platforms": [
@@ -10,8 +10,17 @@
   },
   "keywords": [
     "ecosystem:cordova",
-    "cordova-android"
+    "cordova-android",
+	  "javascript",
+	  "cordova-plugin-inapppurchase",
+	  "inapppurchase",
+	  "plugin-inapppurchase",
+	  "cordova-inapppurchase",
+	  "cordova-plugin-iap",
+	  "iap",
+	  "indo-cordova-plugin-iap"
   ],
-  "author": "",
+  "author": "EMI INDO",
+  "email": "cordova.c3addon@gmail.com",
   "license": "ISC"
 }

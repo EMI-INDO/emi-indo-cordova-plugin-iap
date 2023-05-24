@@ -1,6 +1,12 @@
 <?xml version='1.0' encoding='utf-8'?>
 <plugin id="emi-indo-cordova-plugin-iap" version="0.0.1" xmlns="http://apache.org/cordova/ns/plugins/1.0" xmlns:android="http://schemas.android.com/apk/res/android">
+
+
 	<name>emiBillingPlugin</name>
+	 <description>Cordova Plugin in app purchase android</description>
+	<author>EMI INDO</author>
+	<license>ISC</license>
+	
 	<js-module name="emiBillingPlugin" src="www/emiBillingPlugin.js">
 		<clobbers target="cordova.plugins.emiBillingPlugin"/>
 	</js-module>
