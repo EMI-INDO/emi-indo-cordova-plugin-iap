@@ -38,7 +38,7 @@ public class emiBillingPlugin extends CordovaPlugin {
    String ProductId = null;
    String Type = null;
 
-  
+
 
    String Position = null;
 
@@ -66,17 +66,12 @@ public class emiBillingPlugin extends CordovaPlugin {
                                     }
                                 } else {
 
-                                  //  PluginResult result = new PluginResult(PluginResult.Status.OK, "onInitializeBillingClientError");
-                                  //  result.setKeepCallback(true);
-                                  //  callbackContext.sendPluginResult(result);
-
-                                   // cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onStartConnection');");
-                                  //  Log.d(TAG, "Response NOT OK");
+                                    Log.d(TAG, "Response NOT OK");
+                                    callbackContext.error(billingResult.getResponseCode());
                                 }
                             }
                     ).build();
 
-            //start the connection after initializing the billing client
             establishConnection(callbackContext);
 
 
@@ -95,7 +90,7 @@ public class emiBillingPlugin extends CordovaPlugin {
                 callbackContext.error(e.toString());
             }
 
-            GetListsInAppDetail();
+            _Purchase();
 
             return true;
         }
@@ -216,17 +211,26 @@ public class emiBillingPlugin extends CordovaPlugin {
                                                     } else {
 
                                                         callbackContext.success(list.get(i).getOriginalJson());
-                                                        _getOrderProductDetail(callbackContext);
+
                                                     }
 
-
+                                                    _getOrderProductDetail(callbackContext);
 
                                                 }
 
                                             }
+                                        } else {
+
+                                            callbackContext.error(billingResult.getResponseCode());
                                         }
+                                    } else {
+
+                                        callbackContext.error(billingResult.getResponseCode());
                                     }
                                 });
+                    } else {
+
+                        callbackContext.error(billingResult.getResponseCode());
                     }
                 }
             });
@@ -267,23 +271,31 @@ public class emiBillingPlugin extends CordovaPlugin {
                                         for (int i = 0; i < list.size(); i++) {
 
                                             if (list.get(i).getProducts().contains(ProductId)) {
-                                              //  tv_status.setText("Premium Restored");
-                                              //  Log.d("TAG", "Product id " + PRODUCT_PREMIUM + " will restore here");
-                                              //  callbackContext.success(list.toString());
-                                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onRestored");   //Facebook Banner AdDistroyed
+
+                                                PluginResult result = new PluginResult(PluginResult.Status.OK, "on.Restored.Success");   //Facebook Banner AdDistroyed
                                                 result.setKeepCallback(true);
                                                 callbackContext.sendPluginResult(result);
-                                              //  cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onRestored');");
+
+                                            } else {
+
+                                                callbackContext.error(list.toString());
                                             }
 
                                         }
                                     } else {
-                                      //  tv_status.setText("Nothing found to Restored");
+
                                         Log.d("TAG", "In APP Not Found To Restore");
                                         callbackContext.error(list.toString());
                                     }
+                                } else {
+
+                                    callbackContext.error(billingResult.getResponseCode());
                                 }
                             });
+
+                } else {
+
+                    callbackContext.error(billingResult.getResponseCode());
 
                 }
             }
@@ -301,7 +313,7 @@ public class emiBillingPlugin extends CordovaPlugin {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
 
 
-                    PluginResult result = new PluginResult(PluginResult.Status.OK, "onBillingSetupFinished"); 
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, "on.Billing.Setup.Finished");
                     result.setKeepCallback(true);
                     callbackContext.sendPluginResult(result);
 
@@ -314,16 +326,16 @@ public class emiBillingPlugin extends CordovaPlugin {
 
                 establishConnection(callbackContext);
 
-                PluginResult result = new PluginResult(PluginResult.Status.OK, "onBillingServiceDisconnected"); 
+                PluginResult result = new PluginResult(PluginResult.Status.OK, "on.Billing.Service.Disconnected");
                 result.setKeepCallback(true);
                 callbackContext.sendPluginResult(result);
-               
+
             }
         });
     }
 
 
-    void GetListsInAppDetail() {
+    void _Purchase() {
         ArrayList<QueryProductDetailsParams.Product> productList = new ArrayList<>();
 
         final ArrayList<String> purchaseItemIDs = new ArrayList<String>() {{
@@ -349,11 +361,11 @@ public class emiBillingPlugin extends CordovaPlugin {
 
 
             for (ProductDetails li : list) {
-             
+
                 LaunchPurchaseFlow(list.get(0));
-             
+
             }
-            
+
         });
     }
 
@@ -385,9 +397,10 @@ public class emiBillingPlugin extends CordovaPlugin {
         billingClient.queryProductDetailsAsync(params, (billingResult, list) -> {
 
             for (ProductDetails li : list) {
-                //  Log.d(TAG, "IN APP item Price" + li.getOneTimePurchaseOfferDetails().getFormattedPrice());
-               // callbackContext.success(li.toString());
-                PluginResult result = new PluginResult(PluginResult.Status.OK,  list.toString());
+
+                callbackContext.success(li.toString());
+
+                PluginResult result = new PluginResult(PluginResult.Status.OK,  "on.GetProductDetail.Success");
                 result.setKeepCallback(true);
                 callbackContext.sendPluginResult(result);
 
@@ -427,9 +440,11 @@ public class emiBillingPlugin extends CordovaPlugin {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                     for (String pur : purchases.getProducts()) {
                         if (pur.equalsIgnoreCase(ProductId)) {
-                            Log.d("TAG", "Purchase is successful");
+                            Log.d("TAG", "Purchase is{ successful");
 
                                 ConsumePurchase(purchases, callbackContext);
+                        } else {
+                            callbackContext.error(billingResult.getResponseCode());
                         }
                     }
                 } else {
@@ -443,9 +458,11 @@ public class emiBillingPlugin extends CordovaPlugin {
                         for (String pur : purchases.getProducts()) {
                             if (pur.equalsIgnoreCase(ProductId)) {
 
-                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onNon-Consumable.Successful");
+                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onNon-Consumable.PurchaseSuccessful");
                                 result.setKeepCallback(true);
                                 callbackContext.sendPluginResult(result);
+                            } else {
+                                callbackContext.error(billingResult.getResponseCode());
                             }
                         }
                     } else {
@@ -460,63 +477,6 @@ public class emiBillingPlugin extends CordovaPlugin {
     }
 
 
-    /*
-
-    public void getErrorReason(int errorCode, CallbackContext callbackContext) {
-
-        switch(errorCode) {
-            case BillingClient.BillingResponseCode.OK:
-                Error = "OK";
-                break;
-            case BillingClient.BillingResponseCode.USER_CANCELED:
-                Error = "USER_CANCELED";
-                break;
-            case BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE:
-                Error = "SERVICE_UNAVAILABLE";
-                break;
-            case BillingClient.BillingResponseCode.BILLING_UNAVAILABLE:
-                Error = "BILLING_UNAVAILABLE";
-                break;
-            case BillingClient.BillingResponseCode.ITEM_UNAVAILABLE:
-                Error = "ITEM_UNAVAILABLE";
-                break;
-            case BillingClient.BillingResponseCode.DEVELOPER_ERROR:
-                Error = "DEVELOPER_ERROR";
-                break;
-            case BillingClient.BillingResponseCode.ERROR:
-                Error = "ERROR";
-                break;
-            case BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED:
-                Error = "ITEM_ALREADY_OWNED";
-                break;
-            case BillingClient.BillingResponseCode.ITEM_NOT_OWNED:
-                Error = "ITEM_NOT_OWNED";
-                break;
-            case BillingClient.BillingResponseCode.SERVICE_DISCONNECTED:
-                Error = "SERVICE_DISCONNECTED";
-                break;
-            case BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED:
-                Error = "FEATURE_NOT_SUPPORTED";
-                break;
-            case BillingClient.BillingResponseCode.NETWORK_ERROR:
-                Error = "NETWORK_ERROR";
-                break;
-        }
-
-
-          if (Error != null ){
-
-              PluginResult result = new PluginResult(PluginResult.Status.OK, Error);
-              result.setKeepCallback(true);
-              callbackContext.sendPluginResult(result);
-          }
-
-
-
-    }
-
-
-     */
 
     //This function will be called in handlepurchase() after success of any consumeable purchase
     void ConsumePurchase(Purchase purchase, CallbackContext callbackContext) {
@@ -526,7 +486,7 @@ public class emiBillingPlugin extends CordovaPlugin {
         billingClient.consumeAsync(params, (billingResult, s) -> {
 
             Log.d("TAG", "Consuming Successful: "+s);
-            PluginResult result = new PluginResult(PluginResult.Status.OK, "onConsumable.Successful");
+            PluginResult result = new PluginResult(PluginResult.Status.OK, "onConsumable.PurchaseSuccessful");
             result.setKeepCallback(true);
             callbackContext.sendPluginResult(result);
 
