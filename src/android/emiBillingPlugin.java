@@ -19,6 +19,7 @@ import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
 import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
 
@@ -30,13 +31,18 @@ import java.util.Objects;
  */
 public class emiBillingPlugin extends CordovaPlugin {
     private final String TAG = "emiBillingPlugin";
-    private CordovaWebView cWebView;
+
+    private final CallbackContext PUBLIC_CALLBACKS = null;
+   public CordovaWebView cWebView;
 
    String ProductId = null;
    String Type = null;
 
-    BillingClient billingClient;
+  
 
+   String Position = null;
+
+    BillingClient billingClient;
 
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         super.initialize(cordova, webView);
@@ -44,7 +50,7 @@ public class emiBillingPlugin extends CordovaPlugin {
     }
 
     @Override
-    public boolean execute(@NonNull String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+    public boolean execute(@NonNull String action, JSONArray args, final CallbackContext callbackContext) throws JSONException {
         if (action.equals("initializeBillingClient")) {
 
             billingClient = BillingClient.newBuilder(cordova.getActivity())
@@ -56,18 +62,22 @@ public class emiBillingPlugin extends CordovaPlugin {
                                     for (Purchase purchase : list) {
 
                                       //  Log.d(TAG, "Response is OK");
-                                        handlePurchase(purchase);
+                                        handlePurchase(purchase, callbackContext);
                                     }
                                 } else {
 
-                                    cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onStartConnection');");
+                                  //  PluginResult result = new PluginResult(PluginResult.Status.OK, "onInitializeBillingClientError");
+                                  //  result.setKeepCallback(true);
+                                  //  callbackContext.sendPluginResult(result);
+
+                                   // cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onStartConnection');");
                                   //  Log.d(TAG, "Response NOT OK");
                                 }
                             }
                     ).build();
 
             //start the connection after initializing the billing client
-            establishConnection();
+            establishConnection(callbackContext);
 
 
             return true;
@@ -91,10 +101,18 @@ public class emiBillingPlugin extends CordovaPlugin {
         }
 
         if (action.equals("restorePurchases")) {
-            // String message = args.getString(0);
 
+            final String productId = args.getString(0);
 
-           restorePurchases();
+            try {
+                ProductId = productId;
+
+            } catch ( Exception e) {
+
+                callbackContext.error(e.toString());
+            }
+
+           restorePurchases(callbackContext);
 
             return true;
         }
@@ -118,28 +136,174 @@ public class emiBillingPlugin extends CordovaPlugin {
         }
 
 
+        if (action.equals("getOrderProductDetail")) {
+
+            final String productId = args.getString(0);
+            final String position = args.getString(1);
+
+            try {
+                ProductId = productId;
+                Position = position;
+            } catch ( Exception e) {
+
+                callbackContext.error(e.toString());
+            }
+
+            getOrderProductDetail(callbackContext);
+
+            return true;
+        }
+
+
 
 
         return false;
     }
 
-   
+    private void getOrderProductDetail(CallbackContext callbackContext) {
 
-    void establishConnection() {
+
+            billingClient = BillingClient.newBuilder(cordova.getActivity()).enablePendingPurchases().setListener((billingResult, list) -> {
+            }).build();
+            final BillingClient finalBillingClient = billingClient;
+            billingClient.startConnection(new BillingClientStateListener() {
+                @Override
+                public void onBillingServiceDisconnected() {
+                    establishConnection(callbackContext);
+                }
+
+                @Override
+                public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+
+                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                        finalBillingClient.queryPurchasesAsync(
+                                QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(), (billingResult1, list) -> {
+                                    if (billingResult1.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                                        if (list.size() > 0) {
+
+                                            Log.d("TAG", "IN APP SUCCESS RESTORE: " + list);
+
+                                            for (int i = 0; i < list.size(); i++) {
+
+                                                if (list.get(i).getProducts().contains(ProductId)) {
+                                                    if (Objects.equals(Position, "orderId")) {
+                                                        callbackContext.success(list.get(i).getOrderId());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "purchaseToken")) {
+                                                        callbackContext.success(list.get(i).getPurchaseToken());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "packageName")) {
+                                                        callbackContext.success(list.get(i).getPackageName());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "purchaseTime")) {
+                                                        callbackContext.success((int) list.get(i).getPurchaseTime());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "purchaseState")) {
+                                                        callbackContext.success(list.get(i).getPurchaseState());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "quantity")) {
+                                                        callbackContext.success(list.get(i).getQuantity());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "signature")) {
+                                                        callbackContext.success(list.get(i).getSignature());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "originalJson")) {
+                                                        callbackContext.success(list.get(i).getOriginalJson());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else if (Objects.equals(Position, "productId")) {
+                                                        callbackContext.success(list.get(i).getProducts().toString());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    } else {
+
+                                                        callbackContext.success(list.get(i).getOriginalJson());
+                                                        _getOrderProductDetail(callbackContext);
+                                                    }
+
+
+
+                                                }
+
+                                            }
+                                        }
+                                    }
+                                });
+                    }
+                }
+            });
+
+    }
+
+    private void _getOrderProductDetail(CallbackContext callbackContext) {
+
+        PluginResult result = new PluginResult(PluginResult.Status.OK, "onGetOrderProductDetailSuccess");
+        result.setKeepCallback(true);
+        callbackContext.sendPluginResult(result);
+
+    }
+
+    private void restorePurchases(CallbackContext callbackContext) {
+
+        billingClient = BillingClient.newBuilder(cordova.getActivity()).enablePendingPurchases().setListener((billingResult, list) -> {
+        }).build();
+        final BillingClient finalBillingClient = billingClient;
+        billingClient.startConnection(new BillingClientStateListener() {
+            @Override
+            public void onBillingServiceDisconnected() {
+
+                establishConnection(callbackContext);
+            }
+
+            @Override
+            public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
+
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                    finalBillingClient.queryPurchasesAsync(
+                            QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(), (billingResult1, list) -> {
+                                if (billingResult1.getResponseCode() == BillingClient.BillingResponseCode.OK) {
+                                    if (list.size() > 0) {
+
+                                        Log.d("TAG", "IN APP SUCCESS RESTORE: " + list);
+
+                                        for (int i = 0; i < list.size(); i++) {
+
+                                            if (list.get(i).getProducts().contains(ProductId)) {
+                                              //  tv_status.setText("Premium Restored");
+                                              //  Log.d("TAG", "Product id " + PRODUCT_PREMIUM + " will restore here");
+                                              //  callbackContext.success(list.toString());
+                                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onRestored");   //Facebook Banner AdDistroyed
+                                                result.setKeepCallback(true);
+                                                callbackContext.sendPluginResult(result);
+                                              //  cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onRestored');");
+                                            }
+
+                                        }
+                                    } else {
+                                      //  tv_status.setText("Nothing found to Restored");
+                                        Log.d("TAG", "In APP Not Found To Restore");
+                                        callbackContext.error(list.toString());
+                                    }
+                                }
+                            });
+
+                }
+            }
+        });
+    }
+
+
+
+
+
+    void establishConnection(CallbackContext callbackContext) {
         billingClient.startConnection(new BillingClientStateListener() {
             @Override
             public void onBillingSetupFinished(@NonNull BillingResult billingResult) {
                 if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
 
-                    // The BillingClient is ready. You can query purchases here.
 
-                    //Use any of function below to get details upon successful connection
-
-                    // GetSingleInAppDetail();
-                  //  GetListsInAppDetail(ProductId, callbackContext);
-
-                  //  Log.d(TAG, "Connection Established");
-                    cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onBillingSetupFinished');");
+                    PluginResult result = new PluginResult(PluginResult.Status.OK, "onBillingSetupFinished"); 
+                    result.setKeepCallback(true);
+                    callbackContext.sendPluginResult(result);
 
                 }
             }
@@ -147,27 +311,16 @@ public class emiBillingPlugin extends CordovaPlugin {
             @Override
             public void onBillingServiceDisconnected() {
 
-                // Try to restart the connection on the next request to
-                // Google Play by calling the startConnection() method.
-              // Log.d(TAG, "Connection NOT Established");
 
-                establishConnection();
-                cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onBillingServiceDisconnected');");
+                establishConnection(callbackContext);
+
+                PluginResult result = new PluginResult(PluginResult.Status.OK, "onBillingServiceDisconnected"); 
+                result.setKeepCallback(true);
+                callbackContext.sendPluginResult(result);
+               
             }
         });
     }
-
-    /*
-     *
-     * The official examples use an ImmutableList for some reason to build the query,
-     * but you don't actually need to use that.
-     * The setProductList method just takes List<Product> as its input, it does not require ImmutableList.
-     *
-     * */
-
-    /*
-     * If you have API < 24, you could just make an ArrayList instead.
-     * */
 
 
     void GetListsInAppDetail() {
@@ -196,12 +349,11 @@ public class emiBillingPlugin extends CordovaPlugin {
 
 
             for (ProductDetails li : list) {
-              //  Log.d(TAG, "IN APP item Price" + li.getOneTimePurchaseOfferDetails().getFormattedPrice());
-             //   callbackContext.success(li.toString());
+             
                 LaunchPurchaseFlow(list.get(0));
-                cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onLaunchPurchaseFlow');");
+             
             }
-            //Do Anything that you want with requested product details
+            
         });
     }
 
@@ -234,8 +386,10 @@ public class emiBillingPlugin extends CordovaPlugin {
 
             for (ProductDetails li : list) {
                 //  Log.d(TAG, "IN APP item Price" + li.getOneTimePurchaseOfferDetails().getFormattedPrice());
-                callbackContext.success(li.toString());
-                cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.getProductDetail');");
+               // callbackContext.success(li.toString());
+                PluginResult result = new PluginResult(PluginResult.Status.OK,  list.toString());
+                result.setKeepCallback(true);
+                callbackContext.sendPluginResult(result);
 
             }
             //Do Anything that you want with requested product details
@@ -261,7 +415,7 @@ public class emiBillingPlugin extends CordovaPlugin {
 
 
 
-   void handlePurchase(Purchase purchases) {
+   void handlePurchase(Purchase purchases, CallbackContext callbackContext) {
         if (!purchases.isAcknowledged()) {
             billingClient.acknowledgePurchase(AcknowledgePurchaseParams
                     .newBuilder()
@@ -274,63 +428,13 @@ public class emiBillingPlugin extends CordovaPlugin {
                     for (String pur : purchases.getProducts()) {
                         if (pur.equalsIgnoreCase(ProductId)) {
                             Log.d("TAG", "Purchase is successful");
-                           // tv_status.setText("Yay! Purchased");
-                                ConsumePurchase(purchases);
 
-                            //Calling Consume to consume the current purchase
-                            // so user will be able to buy same product again
-
+                                ConsumePurchase(purchases, callbackContext);
                         }
                     }
-                }
-
-                //else {
-
-
-
-                   else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.USER_CANCELED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.SERVICE_UNAVAILABLE');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.BILLING_UNAVAILABLE) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.BILLING_UNAVAILABLE');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_UNAVAILABLE) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_UNAVAILABLE');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.DEVELOPER_ERROR) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.DEVELOPER_ERROR');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ERROR) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ERROR');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
-                        //    callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_ALREADY_OWNED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_NOT_OWNED) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_NOT_OWNED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.FEATURE_NOT_SUPPORTED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.SERVICE_DISCONNECTED) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.SERVICE_DISCONNECTED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.NETWORK_ERROR) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.NETWORK_ERROR');");
-                    } else {
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.NETWORK_ERROR');");
-
-                    }
-
-
-
-                  //  responseCode(purchases);
-
-             //   }
+                } else {
+                    callbackContext.error(billingResult.getResponseCode());
+                 }
                 }
 
                 if (Objects.equals(Type, "Non-Consumable")){
@@ -338,132 +442,94 @@ public class emiBillingPlugin extends CordovaPlugin {
                     if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                         for (String pur : purchases.getProducts()) {
                             if (pur.equalsIgnoreCase(ProductId)) {
-                              //  Log.d("TAG", "Purchase is successful" + pur);
-                                cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.NonConsumable.Successful');");
-                               // tv_status.setText("Yay! Purchased");
+
+                                PluginResult result = new PluginResult(PluginResult.Status.OK, "onNon-Consumable.Successful");
+                                result.setKeepCallback(true);
+                                callbackContext.sendPluginResult(result);
                             }
                         }
-                    }
-
-                    //else {
-
-                      //  responseCode(purchases);
-
-
-
-                       else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
-                            //  callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.USER_CANCELED');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE) {
-                            //   callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.SERVICE_UNAVAILABLE');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.BILLING_UNAVAILABLE) {
-                            //   callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.BILLING_UNAVAILABLE');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_UNAVAILABLE) {
-                            //  callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_UNAVAILABLE');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.DEVELOPER_ERROR) {
-                            //  callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.DEVELOPER_ERROR');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ERROR) {
-                            //  callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ERROR');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
-                            //    callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_ALREADY_OWNED');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_NOT_OWNED) {
-                            //   callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_NOT_OWNED');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED) {
-                            //   callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.FEATURE_NOT_SUPPORTED');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.SERVICE_DISCONNECTED) {
-                            //   callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.SERVICE_DISCONNECTED');");
-                        } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.NETWORK_ERROR) {
-                            //   callbackContext.error(billingResult.getResponseCode());
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.NETWORK_ERROR');");
-                        } else {
-                            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.NETWORK_ERROR');");
-
-                        }
-
-
-
-
-
-                  //  }
-
-
-                } else {
-
-
-
-
-
-
-                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.USER_CANCELED) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.USER_CANCELED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.SERVICE_UNAVAILABLE');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.BILLING_UNAVAILABLE) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.BILLING_UNAVAILABLE');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_UNAVAILABLE) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_UNAVAILABLE');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.DEVELOPER_ERROR) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.DEVELOPER_ERROR');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ERROR) {
-                        //  callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ERROR');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED) {
-                        //    callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_ALREADY_OWNED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.ITEM_NOT_OWNED) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.ITEM_NOT_OWNED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.FEATURE_NOT_SUPPORTED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.SERVICE_DISCONNECTED) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.SERVICE_DISCONNECTED');");
-                    } else if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.NETWORK_ERROR) {
-                        //   callbackContext.error(billingResult.getResponseCode());
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.NETWORK_ERROR');");
                     } else {
-                        cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.NETWORK_ERROR');");
+
+                        callbackContext.error(billingResult.getResponseCode());
 
                     }
 
-
-
-
-
-
-
-
-                     //  responseCode(purchases);
                 }
             });
         }
     }
 
+
+    /*
+
+    public void getErrorReason(int errorCode, CallbackContext callbackContext) {
+
+        switch(errorCode) {
+            case BillingClient.BillingResponseCode.OK:
+                Error = "OK";
+                break;
+            case BillingClient.BillingResponseCode.USER_CANCELED:
+                Error = "USER_CANCELED";
+                break;
+            case BillingClient.BillingResponseCode.SERVICE_UNAVAILABLE:
+                Error = "SERVICE_UNAVAILABLE";
+                break;
+            case BillingClient.BillingResponseCode.BILLING_UNAVAILABLE:
+                Error = "BILLING_UNAVAILABLE";
+                break;
+            case BillingClient.BillingResponseCode.ITEM_UNAVAILABLE:
+                Error = "ITEM_UNAVAILABLE";
+                break;
+            case BillingClient.BillingResponseCode.DEVELOPER_ERROR:
+                Error = "DEVELOPER_ERROR";
+                break;
+            case BillingClient.BillingResponseCode.ERROR:
+                Error = "ERROR";
+                break;
+            case BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED:
+                Error = "ITEM_ALREADY_OWNED";
+                break;
+            case BillingClient.BillingResponseCode.ITEM_NOT_OWNED:
+                Error = "ITEM_NOT_OWNED";
+                break;
+            case BillingClient.BillingResponseCode.SERVICE_DISCONNECTED:
+                Error = "SERVICE_DISCONNECTED";
+                break;
+            case BillingClient.BillingResponseCode.FEATURE_NOT_SUPPORTED:
+                Error = "FEATURE_NOT_SUPPORTED";
+                break;
+            case BillingClient.BillingResponseCode.NETWORK_ERROR:
+                Error = "NETWORK_ERROR";
+                break;
+        }
+
+
+          if (Error != null ){
+
+              PluginResult result = new PluginResult(PluginResult.Status.OK, Error);
+              result.setKeepCallback(true);
+              callbackContext.sendPluginResult(result);
+          }
+
+
+
+    }
+
+
+     */
+
     //This function will be called in handlepurchase() after success of any consumeable purchase
-    void ConsumePurchase(Purchase purchase) {
+    void ConsumePurchase(Purchase purchase, CallbackContext callbackContext) {
         ConsumeParams params = ConsumeParams.newBuilder()
                 .setPurchaseToken(purchase.getPurchaseToken())
                 .build();
         billingClient.consumeAsync(params, (billingResult, s) -> {
 
             Log.d("TAG", "Consuming Successful: "+s);
-            cWebView.loadUrl("javascript:cordova.fireDocumentEvent('onPurchase.Consumable.Successful');");
-            //  tv_status.setText("Product Consumed");
+            PluginResult result = new PluginResult(PluginResult.Status.OK, "onConsumable.Successful");
+            result.setKeepCallback(true);
+            callbackContext.sendPluginResult(result);
+
         });
     }
 
@@ -479,7 +545,7 @@ public class emiBillingPlugin extends CordovaPlugin {
                     if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
                         for (Purchase purchase : list) {
                             if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED && !purchase.isAcknowledged()) {
-                                handlePurchase(purchase);
+                                handlePurchase(purchase, PUBLIC_CALLBACKS);
                             }
                         }
                     }
