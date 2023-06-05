@@ -40,9 +40,9 @@ cordova plugin add https://github.com/EMI-INDO/emi-indo-cordova-plugin-iap
 cordova plugin rm emi-indo-cordova-plugin-iap
 ```
 
-## All successful or error callback responses = number
+## Tabel Response Code = number
 
-| Response Code | Description                  |
+| Code | Description |
 | :------- | :-------------------------------- |
 | 0 | OK |
 | 1 | USER_CANCELED |
@@ -80,7 +80,7 @@ cordova.plugins.emiInAppPurchase.initialize(
 - if true (consumable) Products can be bought back, productType must be Non-consumable
 - if false Product cannot be repurchased, productType: Non-consumable | Subscriptions
 
-
+```sh
     cordova.plugins.emiInAppPurchase.purchaseProducts(
     
     productType = "Non-consumable", // string (Non-consumable | Subscriptions)
@@ -115,5 +115,59 @@ cordova.plugins.emiInAppPurchase.initialize(
     // alert(error)
     
     })
-   
-  
+   ```
+
+
+
+##  Get Product Detail
+
+> __Note__
+> - position = String
+- value = ProductId | Title | Description | Item_Price | Any 
+
+```sh
+cordova.plugins.emiInAppPurchase.getProductDetail(
+
+    productType = "Non-consumable", // string (Non-consumable | Subscriptions)
+    productId = "id",
+    position = "ProductId", 
+    (result) => { alert(result) },
+    (error) => { alert(error)
+
+    });
+```
+
+##  Get Purchase History
+
+> __Note__
+> - position = String
+- value = Purchase_Token | Original_Json | Quantity | Signature | Developer_Payload | Products | Purchase_Time | Any
+
+```sh
+cordova.plugins.emiInAppPurchase.getPurchaseHistory(
+
+    productType = "Non-consumable", // string (Non-consumable | Subscriptions)
+    position = "Purchase_Token", 
+    (result) => { alert(result) },
+    (error) => { alert(error)
+
+    });
+```
+
+
+##  Restore Purchases
+
+> __Note__
+> - position = String
+- value = OrderId | Purchase_Token | Package_Name | Purchase_Time | Purchase_State | Quantity | Signature | Original_Json | ProductId | Any
+
+```sh
+cordova.plugins.emiInAppPurchase.restorePurchases(
+
+    productType = "Non-consumable", // string (Non-consumable | Subscriptions)
+    position = "OrderId", 
+    (result) => { alert(result) },
+    (error) => { alert(error)
+
+    });
+```
