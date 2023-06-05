@@ -1,0 +1,33 @@
+<plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        id="emi-indo-cordova-plugin-iap"
+        version="0.0.1">
+	<name>emiInAppPurchase</name>
+	<description>Cordova Plugin cordova plugin In App Purchase</description>
+	<author>EMI INDO</author>
+	<license>ISC</license>
+	<js-module name="emiInAppPurchase"
+	           src="www/emiInAppPurchase.js">
+		<clobbers target="cordova.plugins.emiInAppPurchase"/>
+	</js-module>
+	<platform name="android">
+		<preference name="BILLING_VERSION"
+		            default="6.0.0"/>
+		<config-file parent="/*"
+		             target="res/xml/config.xml">
+			<feature name="emiInAppPurchase">
+				<param name="android-package"
+				       value="emi.indo.cordova.plugin.iap.emiInAppPurchase"/>
+			</feature>
+		</config-file>
+		<config-file target="AndroidManifest.xml"
+		             parent="/manifest">
+			<uses-permission android:name="com.android.vending.BILLING"/>
+		</config-file>
+		<config-file parent="/*"
+		             target="AndroidManifest.xml"/>
+		<source-file src="src/android/emiInAppPurchase.java"
+		             target-dir="src/emi/indo/cordova/plugin/iap"/>
+					 <framework src="com.android.billingclient:billing:$BILLING_VERSION"/>
+	</platform>
+</plugin>
