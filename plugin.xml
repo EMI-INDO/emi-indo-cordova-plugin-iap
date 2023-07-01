@@ -1,7 +1,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="emi-indo-cordova-plugin-iap"
-        version="0.0.5">
+        version="0.0.7">
 	<name>emiInAppPurchase</name>
 	<description>Cordova Plugin cordova plugin In App Purchase</description>
 	<author>EMI INDO</author>
