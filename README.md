@@ -90,12 +90,21 @@ cordova.plugins.emiInAppPurchase.initialize(
     description = "description",
     
     (result) => { 
-    
-    if (result === 0){
-    console.log("Give content to the user.")
-    }
-    alert(result) // = 0
-    }
+
+    console.log(result.packageName)
+    console.log(result.productsId)
+    console.log(result.purchaseTime)
+    console.log(result.orderId)
+    console.log(result.purchaseToken)
+    console.log(result.signature)
+    console.log(result.purchaseState)
+    console.log(result.originalJson)
+    console.log(result.quantity)
+    console.log(result.isAcknowledged)
+    console.log(result.isAutoRenewing)
+    console.log(result.accountIdentifiers)
+    console.log(result.developerPayload)
+
     },
     (error) => { 
     // 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | -1 | -2 | 12 
