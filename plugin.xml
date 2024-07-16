@@ -12,7 +12,7 @@
 	</js-module>
 	<platform name="android">
 		<preference name="BILLING_VERSION"
-		            default="6.0.0"/>
+		            default="6.0.1"/>
 		<config-file parent="/*"
 		             target="res/xml/config.xml">
 			<feature name="emiInAppPurchase">
