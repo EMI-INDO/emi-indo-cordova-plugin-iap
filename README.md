@@ -28,7 +28,7 @@
 
 ## Features NEW Method
 
-- getSubscriptionStatus
+- getSubscriptionStatus (Free 200,000 requests per day)
 - redirectToSubscriptionCenter
 - redirectToSpecificSubscription
 - changeSubscription
@@ -85,41 +85,73 @@ cordova.plugins.emiInAppPurchase.initialize((status) => {
     cordova.plugins.emiInAppPurchase.purchaseProducts({
     
     productType: "Non-consumable", // string (Non-consumable | Consumable | Subscriptions)
-    productId: "id"
+    productId: "testId"
     },
-    (result) => { 
-    
-    if (result === 0){
-     console.log("Give content to the user.")
-    } else {
+    (result) => {
 
-     // 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | -1 | -2 | 12 
-     switch (result) {
-      case 1:
-      console.log("Check the table Description")
-      break
-      case 2:
-      console.log("Check the table Description")
-      break
-      case 7:
-      console.log("Call Restore purchase")
-      break
-      // and so on
-     }
-    
+    const dataIsSuccess = result.isPurchasesSuccess; // boolean
+    const dataProductType = result.productType; // Non-consumable | Consumable | Subscriptions
+    const dataProductId = result.productsId; 
+    const dataIsInstallment = result.isInstallmentPlansSupported; // boolean 
+
+    if (dataIsSuccess && dataProductId === "testId"){
+
+      if (dataProductType === 'Non-consumable'){
+
+        console.log(JSON.stringify(result))
+
+      } else if (dataProductType === 'Consumable'){
+
+        console.log(JSON.stringify(result))
+
+      } else if (dataProductType === 'Subscriptions'){
+
+       if (dataIsInstallment){
+
+         console.log(result.commitmentPaymentsCount)
+         console.log(result.subsequentCommitmentPaymentsCount)
+
+       }
+
+       console.log(JSON.stringify(result))
+
+    } 
 
     }
 
+
     },
-    (error) => { // alert(error) }
+    (error) => { // alert(error) 
    
    
-   )
+   })
    ```
 
 
 
 ## getSubscriptionStatus()
+
+- Create GCP service-account-key.json https://www.youtube.com/watch?v=gjAVd784WqE
+- after the service-account.json file is downlaod,
+- change the file name to service-account-key,
+- place the service-account-key.json file in the www folder.
+
+
+
+```sh
+
+Example of Cordova project structure
+
+my-cordova-project/
+├── config.xml      
+└── www/
+    ├── css/            
+    ├── js/         
+    ├── img/        
+    ├── service-account-key.json/   # File service-account  
+    └── index.html  
+```
+
 
 > __Note__
 > - You may get this error on your server side “The current user has insufficient permissions to perform the requested operation.”
@@ -127,19 +159,34 @@ cordova.plugins.emiInAppPurchase.initialize((status) => {
 - 
 ```sh
 
-// https://developers.google.com/android-publisher/api-ref/rest/v3/purchases.subscriptions#resource:-subscriptionpurchase
 
+// NOTE: Essentially if all the settings are correct, you should wait 24 hours to test. getSubscriptionStatus
+// Free 200,000 requests per day
 cordova.plugins.emiInAppPurchase.getSubscriptionStatus({
 
         applicationName: "App Name",
         packageName: "com.xxxxxxx",
         purchaseToken: "token-xxxxxxx",
-        subscriptionId: "id-xxxx"
+        subscriptionId: "id-xxxx" // productId
 
-      },(status) => {
+      },(data) => {
 
-              // RENEWED | CANCELED | ON_HOLD | EXPIRED | UNKNOWN
-              console.log(JSON.stringify(status))
+              
+              console.log(JSON.stringify(data))
+
+              const dataStatus = data.status; // RENEWED | CANCELED | ON_HOLD | EXPIRED | UNKNOWN
+              const dataDetails = data.details;
+
+              console.log(dataStatus)
+
+              console.log(dataDetails.autoRenewing)
+              console.log(dataDetails.countryCode)
+              console.log(dataDetails.expiryTimeMillis)
+              console.log(dataDetails.orderId)
+              console.log(dataDetails.priceAmountMicros)
+              console.log(dataDetails.priceCurrencyCode)
+              console.log(dataDetails.startTimeMillis)
+
 
             },
             (error) => {
@@ -148,7 +195,7 @@ cordova.plugins.emiInAppPurchase.getSubscriptionStatus({
 
             });
 
-)
+
 ```
 
 
@@ -192,7 +239,7 @@ cordova.plugins.emiInAppPurchase.changeSubscription({
 
             });
 
-)
+
 ```
 
 
