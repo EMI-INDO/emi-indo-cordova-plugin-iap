@@ -1,0 +1,6 @@
+// rules.gradle
+android {
+    packagingOptions {
+        exclude 'META-INF/DEPENDENCIES'
+    }
+}

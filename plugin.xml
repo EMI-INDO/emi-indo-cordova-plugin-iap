@@ -1,7 +1,7 @@
 <plugin xmlns="http://apache.org/cordova/ns/plugins/1.0"
         xmlns:android="http://schemas.android.com/apk/res/android"
         id="emi-indo-cordova-plugin-iap"
-        version="0.0.7">
+        version="0.0.9">
 	<name>emiInAppPurchase</name>
 	<description>Cordova Plugin cordova plugin In App Purchase</description>
 	<author>EMI INDO</author>
@@ -11,23 +11,38 @@
 		<clobbers target="cordova.plugins.emiInAppPurchase"/>
 	</js-module>
 	<platform name="android">
-		<preference name="BILLING_VERSION"
-		            default="6.0.1"/>
-		<config-file parent="/*"
-		             target="res/xml/config.xml">
+
+		<preference name="BILLING_VERSION" default="7.1.1"/>
+		<preference name="ANDROID_PUBLISHER" default="v3-rev142-1.25.0"/>
+		<preference name="OAUTH2_HTTP" default="1.20.0"/>
+		<preference name="GOOGLE_API_CLINET" default="1.32.1"/>
+		<preference name="GAPIJETTY" default="1.32.1"/>
+		<preference name="JACKSON2" default="1.43.2"/>
+
+		<config-file parent="/*" target="res/xml/config.xml">
 			<feature name="emiInAppPurchase">
-				<param name="android-package"
-				       value="emi.indo.cordova.plugin.iap.emiInAppPurchase"/>
+				<param name="android-package" value="emi.indo.cordova.plugin.iap.emiInAppPurchase"/>
 			</feature>
 		</config-file>
-		<config-file target="AndroidManifest.xml"
-		             parent="/manifest">
+
+		<framework src="src/android/packaging-options.gradle" custom="true" type="gradleReference" />
+
+		<config-file target="AndroidManifest.xml" parent="/manifest">
 			<uses-permission android:name="com.android.vending.BILLING"/>
 		</config-file>
-		<config-file parent="/*"
-		             target="AndroidManifest.xml"/>
-		<source-file src="src/android/emiInAppPurchase.java"
-		             target-dir="src/emi/indo/cordova/plugin/iap"/>
+
+
+		<config-file parent="/*" target="AndroidManifest.xml"/>
+
+		<source-file src="src/android/emiInAppPurchase.java" target-dir="src/emi/indo/cordova/plugin/iap"/>
+
 					 <framework src="com.android.billingclient:billing:$BILLING_VERSION"/>
+					 <framework src="com.google.apis:google-api-services-androidpublisher:$ANDROID_PUBLISHER"/>
+					 <framework src="com.google.guava:guava:32.0.1-jre"/>
+					 <framework src="com.google.auth:google-auth-library-oauth2-http:$OAUTH2_HTTP"/>
+					 <framework src="com.google.api-client:google-api-client:$GOOGLE_API_CLINET"/>
+					 <framework src="com.google.oauth-client:google-oauth-client-jetty:$GAPIJETTY"/>
+					 <framework src="com.google.http-client:google-http-client-jackson2:$JACKSON2"/>
+
 	</platform>
 </plugin>
