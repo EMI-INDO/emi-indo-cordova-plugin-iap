@@ -93,11 +93,11 @@ public class emiInAppPurchase extends CordovaPlugin {
     private final PurchasesUpdatedListener purchasesUpdatedListener = (billingResult, purchases) -> {
         if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && purchases != null) {
             for (Purchase purchase : purchases) {
-                Log.d(TAG, "Response is OK");
+               // Log.d(TAG, "Response is OK");
                 handlePurchase(purchase);
             }
         } else {
-            Log.d(TAG, "Response NOT OK");
+           // Log.d(TAG, "Response NOT OK");
             errorCallBack(billingResult);
         }
     };
@@ -108,14 +108,12 @@ public class emiInAppPurchase extends CordovaPlugin {
             .build();
 
     @Override
-    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
-        super.initialize(cordova, webView);
+    public void pluginInitialize() {
+        super.pluginInitialize();
         mCordovaWebView = webView;
         mActivity = this.cordova.getActivity();
         mContext = mActivity.getApplicationContext();
-
         resourceApi = new CordovaResourceApi(mContext, webView.getPluginManager());
-
     }
 
 
@@ -209,18 +207,18 @@ public class emiInAppPurchase extends CordovaPlugin {
             QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
                     .setProductList(productList)
                     .build();
-
-            billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
-                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && !productDetailsList.isEmpty()) {
-                    changeSubscription(oldPurchaseToken, productDetailsList.get(0), selectedOfferIndex, replacementMode);
+            // FIX Google Play Billing Library 8.0.0
+            billingClient.queryProductDetailsAsync(params, (billingResult, queryResult) -> {
+                List<ProductDetails> newProductDetailsList = queryResult.getProductDetailsList();
+                if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && newProductDetailsList != null && !newProductDetailsList.isEmpty()) {
+                    changeSubscription(oldPurchaseToken, newProductDetailsList.get(0), selectedOfferIndex, replacementMode);
                 } else {
                     handleBillingResult(billingResult);
                 }
             });
 
             return true;
-        }
-        if (action.equals("getSubscriptionStatus")) {
+        } else if (action.equals("getSubscriptionStatus")) {
             String applicationName = args.getString(0);
             String packageName = args.getString(1);
             String purchaseToken = args.getString(2);
@@ -306,10 +304,6 @@ public class emiInAppPurchase extends CordovaPlugin {
 
 
 
-
-
-
-    // Fungsi untuk memulai perubahan langganan (upgrade/downgrade)
     private void changeSubscription(String oldPurchaseToken, ProductDetails newProductDetails, int selectedOfferIndex, String replacementMode) {
         List<ProductDetails.SubscriptionOfferDetails> offerDetailsList = newProductDetails.getSubscriptionOfferDetails();
         if (offerDetailsList != null && !offerDetailsList.isEmpty()) {
@@ -394,7 +388,7 @@ public class emiInAppPurchase extends CordovaPlugin {
             @SuppressLint("LongLogTag")
             @Override
             public void onBillingServiceDisconnected() {
-                Log.d(TAG, "Connection NOT Established");
+               // Log.d(TAG, "Connection NOT Established");
                 establishConnection();
 
             }
@@ -413,7 +407,7 @@ public class emiInAppPurchase extends CordovaPlugin {
 
                 String countryCode = billingConfig.getCountryCode();
                 PUBLIC_CALLBACKS.success(countryCode);
-                Log.d(TAG, "User's Play Country: " + countryCode);
+               // Log.d(TAG, "User's Play Country: " + countryCode);
 
             } else {
 
@@ -433,9 +427,11 @@ public class emiInAppPurchase extends CordovaPlugin {
         QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder()
                 .setProductList(productList)
                 .build();
+        // FIX Google Play Billing Library 8.0.0
+        billingClient.queryProductDetailsAsync(params, (billingResult, queryProductDetailsResult) -> {
+            List<ProductDetails> productDetailsList = queryProductDetailsResult.getProductDetailsList();
 
-        billingClient.queryProductDetailsAsync(params, (billingResult, productDetailsList) -> {
-            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && !productDetailsList.isEmpty()) {
+            if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK && productDetailsList != null && !productDetailsList.isEmpty()) {
                 try {
                     LaunchPurchaseFlow(productDetailsList.get(0), productType);
                 } catch (Exception e) {
@@ -493,7 +489,7 @@ public class emiInAppPurchase extends CordovaPlugin {
                     installmentPlansSupported = true;
                 } else {
                     // Handle countries where installment plans are not supported
-                    Log.d(TAG, "Installment plans are not supported in this country");
+                  //  Log.d(TAG, "Installment plans are not supported in this country");
                     installmentPlansSupported = false;
                 }
 
@@ -511,13 +507,13 @@ public class emiInAppPurchase extends CordovaPlugin {
 
         switch (productType) {
             case "Subscriptions":
-                Log.d(TAG, "Launching billing flow for subscriptions product");
+               // Log.d(TAG, "Launching billing flow for subscriptions product");
                 break;
             case "Non-Consumable":
-                Log.d(TAG, "Launching billing flow for non-consumable product");
+               // Log.d(TAG, "Launching billing flow for non-consumable product");
                 break;
             case "Consumable":
-                Log.d(TAG, "Launching billing flow for consumable product");
+               // Log.d(TAG, "Launching billing flow for consumable product");
                 break;
         }
 
@@ -680,28 +676,37 @@ public class emiInAppPurchase extends CordovaPlugin {
 
 
     @SuppressLint("LongLogTag")
-   private void getProductDetail(final CallbackContext PUBLIC_CALLBACKS) {
+    private void getProductDetail(final CallbackContext PUBLIC_CALLBACKS) {
         if (isType != null) {
             ArrayList<QueryProductDetailsParams.Product> productList = new ArrayList<>();
             productList.add(QueryProductDetailsParams.Product.newBuilder().setProductId(ProductId)
                     .setProductType(isType).build());
             QueryProductDetailsParams params = QueryProductDetailsParams.newBuilder().setProductList(productList).build();
-            billingClient.queryProductDetailsAsync(params, (billingResult, list) -> {
-                for (ProductDetails li : list) {
-                    if (Objects.equals(Position, "ProductId")) {
-                        PUBLIC_CALLBACKS.success(li.getProductId());
-                    } else if (Objects.equals(Position, "Title")) {
-                        PUBLIC_CALLBACKS.success(li.getTitle());
-                    } else if (Objects.equals(Position, "Description")) {
-                        PUBLIC_CALLBACKS.success(li.getDescription());
-                    } else if (Objects.equals(Position, "item_Price")) {
-                        PUBLIC_CALLBACKS
-                                .success(Objects.requireNonNull(li.getOneTimePurchaseOfferDetails()).getFormattedPrice());
-                    } else if (Objects.equals(Position, "Any")) {
-                        PUBLIC_CALLBACKS.success(li.toString());
-                    } else {
-                        PUBLIC_CALLBACKS.success(li.toString());
+            // FIX Google Play Billing Library 8.0.0
+            billingClient.queryProductDetailsAsync(params, (billingResult, queryResult) -> {
+
+                List<ProductDetails> productDetailsList = queryResult.getProductDetailsList();
+
+                if (productDetailsList != null) {
+                    for (ProductDetails li : productDetailsList) {
+                        if (Objects.equals(Position, "ProductId")) {
+                            PUBLIC_CALLBACKS.success(li.getProductId());
+                        } else if (Objects.equals(Position, "Title")) {
+                            PUBLIC_CALLBACKS.success(li.getTitle());
+                        } else if (Objects.equals(Position, "Description")) {
+                            PUBLIC_CALLBACKS.success(li.getDescription());
+                        } else if (Objects.equals(Position, "item_Price")) {
+                            PUBLIC_CALLBACKS
+                                    .success(Objects.requireNonNull(li.getOneTimePurchaseOfferDetails()).getFormattedPrice());
+                        } else if (Objects.equals(Position, "Any")) {
+                            PUBLIC_CALLBACKS.success(li.toString());
+                        } else {
+                            PUBLIC_CALLBACKS.success(li.toString());
+                        }
+                        break;
                     }
+                } else {
+                    PUBLIC_CALLBACKS.error("Product details not found.");
                 }
             });
         }
@@ -891,14 +896,6 @@ private void getPurchaseHistory() {
 
 
 
-
-
-
-
-
-
-
-
     @Override
     public void onResume(boolean multitasking) {
         super.onResume(multitasking);
@@ -944,53 +941,6 @@ private void getPurchaseHistory() {
         );
     }
 
-
-
-
-
-
-
-    /*
-    @Override
-    public void onResume(boolean multitasking) {
-        super.onResume(multitasking);
-
-        // Query for subscription purchases
-        billingClient.queryPurchasesAsync(
-                QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build(),
-                (billingResult, purchases) -> {
-                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                        for (Purchase purchase : purchases) {
-                            if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED
-                                    && !purchase.isAcknowledged()) {
-                                handlePurchase(purchase);
-                            }
-                        }
-                    } else {
-                        handleBillingResult(billingResult);
-                    }
-                }
-        );
-
-        // Query for in-app (consumable and non-consumable) purchases
-        billingClient.queryPurchasesAsync(
-                QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.INAPP).build(),
-                (billingResult, purchases) -> {
-                    if (billingResult.getResponseCode() == BillingClient.BillingResponseCode.OK) {
-                        for (Purchase purchase : purchases) {
-                            if (purchase.getPurchaseState() == Purchase.PurchaseState.PURCHASED
-                                    && !purchase.isAcknowledged()) {
-                                handlePurchase(purchase);
-                            }
-                        }
-                    } else {
-                        handleBillingResult(billingResult);
-                    }
-                }
-        );
-    }
-
-*/
 
 
     @Override
